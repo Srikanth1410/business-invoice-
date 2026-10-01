@@ -1,0 +1,383 @@
+<div class="app-container">
+  <!-- Glowing Background Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1>VENGAMAMBA</h1>
+        <span>INVOICE WORKFLOW SYSTEM</span>
+      </div>
+    </div>
+    <div class="server-status">
+      <span class="status-dot green"></span>
+      <span>REST Go API Integration: Enabled</span>
+    </div>
+  </header>
+
+  <!-- Main Split Layout -->
+  <main class="main-content">
+    
+    <!-- Left Section: Form Editor -->
+    <section class="editor-section">
+      <div class="panel-header">
+        <h2>Invoice Details Editor</h2>
+        <p>Fill out the customer and item details below. The preview updates in real time.</p>
+      </div>
+
+      <form class="invoice-form" (ngSubmit)="onSubmit()">
+        <!-- Block 1: Basic Info -->
+        <div class="form-card">
+          <h3 class="card-title">1. Document Metadata</h3>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="invoiceNo">Invoice No. <span class="required">*</span></label>
+              <input type="text" id="invoiceNo" name="invoiceNo" [(ngModel)]="invoiceNo" placeholder="e.g. RVE-2026-001" required />
+            </div>
+            <div class="form-group col-6">
+              <label for="invoiceDate">Invoice Date <span class="required">*</span></label>
+              <input type="date" id="invoiceDate" name="invoiceDate" [(ngModel)]="invoiceDate" (change)="calculateTotals()" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 2: Receiver Info -->
+        <div class="form-card">
+          <h3 class="card-title">2. Details of Receiver</h3>
+          <div class="form-group">
+            <label for="receiverName">Receiver Name <span class="required">*</span></label>
+            <input type="text" id="receiverName" name="receiverName" [(ngModel)]="receiverName" placeholder="Customer or Business Name" required />
+          </div>
+          <div class="form-group">
+            <label for="receiverAddress">Address</label>
+            <textarea id="receiverAddress" name="receiverAddress" [(ngModel)]="receiverAddress" rows="2" placeholder="Full Billing Address"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label for="receiverGstin">GSTIN</label>
+              <input type="text" id="receiverGstin" name="receiverGstin" [(ngModel)]="receiverGstin" placeholder="GSTIN (15 chars)" maxlength="15" />
+            </div>
+            <div class="form-group col-4">
+              <label for="receiverState">State</label>
+              <input type="text" id="receiverState" name="receiverState" [(ngModel)]="receiverState" placeholder="e.g. Telangana" />
+            </div>
+            <div class="form-group col-4">
+              <label for="stateCode">State Code</label>
+              <input type="text" id="stateCode" name="stateCode" [(ngModel)]="stateCode" placeholder="e.g. 36" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Block 3: Items Grid -->
+        <div class="form-card items-card">
+          <div class="card-header-action">
+            <h3 class="card-title">3. Line Items</h3>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addItem()">+ Add Item</button>
+          </div>
+
+          <div class="items-table-wrapper">
+            <table class="items-editor-table">
+              <thead>
+                <tr>
+                  <th width="8%">Sl</th>
+                  <th width="45%">Particulars</th>
+                  <th width="15%">HSN Code</th>
+                  <th width="10%">QTY</th>
+                  <th width="12%">Rate</th>
+                  <th width="10%">Amount</th>
+                  <th width="5%"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of items; let i = index">
+                  <td class="text-center">{{item.slNo}}</td>
+                  <td>
+                    <input type="text" [name]="'particulars_' + i" [(ngModel)]="item.particulars" placeholder="Item/Service Description" required />
+                  </td>
+                  <td>
+                    <input type="text" [name]="'hsn_' + i" [(ngModel)]="item.hsnCode" placeholder="HSN Code" />
+                  </td>
+                  <td>
+                    <input type="number" [name]="'qty_' + i" [(ngModel)]="item.qty" (input)="calculateTotals()" min="0" placeholder="0" required />
+                  </td>
+                  <td>
+                    <input type="number" [name]="'rate_' + i" [(ngModel)]="item.rate" (input)="calculateTotals()" min="0" step="0.01" placeholder="0.00" required />
+                  </td>
+                  <td class="text-right item-total-amt">
+                    {{item.amount | number:'1.2-2'}}
+                  </td>
+                  <td>
+                    <button type="button" class="btn-delete" (click)="removeItem(i)" [disabled]="items.length <= 1">×</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Block 4: Taxes & Settings -->
+        <div class="form-card">
+          <h3 class="card-title">4. Tax Configurations</h3>
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label for="cgstRate">CGST (%)</label>
+              <input type="number" id="cgstRate" name="cgstRate" [(ngModel)]="cgstRate" (input)="calculateTotals()" min="0" max="100" />
+            </div>
+            <div class="form-group col-4">
+              <label for="sgstRate">SGST (%)</label>
+              <input type="number" id="sgstRate" name="sgstRate" [(ngModel)]="sgstRate" (input)="calculateTotals()" min="0" max="100" />
+            </div>
+            <div class="form-group col-4">
+              <label for="igstRate">IGST (%)</label>
+              <input type="number" id="igstRate" name="igstRate" [(ngModel)]="igstRate" (input)="calculateTotals()" min="0" max="100" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="submit-wrapper">
+          <div class="button-row">
+            <button type="submit" class="btn btn-primary" [disabled]="loading" style="flex: 1;">
+              <span *ngIf="!loading">💾 Save PDF to Downloads</span>
+              <span *ngIf="loading">⚙️ Saving...</span>
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="onPrint()" style="flex: 1;">
+              🖨️ Print Invoice
+            </button>
+          </div>
+          <div class="error-msg" *ngIf="message && !success">{{message}}</div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Right Section: Live Print Preview -->
+    <section class="preview-section">
+      <div class="panel-header">
+        <h2>Live Document Preview</h2>
+        <p>Interactive WYSIWYG replica of the printed voucher layout.</p>
+      </div>
+
+      <!-- Scanned Voucher Replica Card -->
+      <div class="voucher-card">
+        <div class="voucher-border">
+          
+          <!-- TAX INVOICE Title -->
+          <div class="voucher-tax-title">TAX INVOICE</div>
+
+          <!-- Contact Numbers -->
+          <div class="voucher-contact">
+            <div>Cell: 7386388032</div>
+            <div>: 9440597629</div>
+          </div>
+
+          <!-- Header Logo / Emblem and Title -->
+          <div class="voucher-header">
+            <div class="emblem-wrapper">
+              <!-- Illustrative outline placeholder emblem of a deity -->
+              <div class="emblem-placeholder">🪔</div>
+            </div>
+            <div class="company-titles">
+              <div class="title-main">RAVINDRA SRI VENGAMAMBA</div>
+              <div class="title-sub">EQUIPMENTS & RENTALS</div>
+            </div>
+          </div>
+
+          <!-- Subtext Address & GSTIN -->
+          <div class="voucher-header-details">
+            <div class="address-line">Flat No. 4-193/2, Opp : SSIT College, Main Road, B. Gangaram - 507 303,</div>
+            <div class="address-line">Khammam Dist, Telangana.</div>
+            <div class="gst-line">GST No. 36ANBPM4958K1ZK</div>
+          </div>
+
+          <!-- Metadata Section -->
+          <div class="voucher-meta-grid">
+            <div class="meta-cell border-right">
+              <strong>Invoice No.</strong> <span>{{invoiceNo || '_______________'}}</span>
+            </div>
+            <div class="meta-cell">
+              <strong>Invoice Date :</strong> <span>{{(invoiceDate | date:'dd-MM-yyyy') || '______________'}}</span>
+            </div>
+          </div>
+
+          <!-- Details of Receiver Header -->
+          <div class="voucher-section-title">
+            Details of Receiver
+          </div>
+
+          <!-- Details of Receiver Data -->
+          <div class="voucher-receiver-block">
+            <div class="receiver-row">
+              <strong>Name :</strong> <span class="underlined">{{receiverName || '........................................................................................................................................'}}</span>
+            </div>
+            <div class="receiver-row">
+              <strong>Address :</strong> <span class="underlined">{{receiverAddress || '........................................................................................................................................'}}</span>
+            </div>
+            <div class="receiver-row grid-3">
+              <div><strong>GSTIN :</strong> <span class="underlined">{{receiverGstin || '...........................................'}}</span></div>
+              <div><strong>State :</strong> <span class="underlined">{{receiverState || '............................'}}</span></div>
+              <div><strong>State Code :</strong> <span class="underlined">{{stateCode || '................'}}</span></div>
+            </div>
+          </div>
+
+          <!-- Main Grid Table -->
+          <div class="voucher-table-wrapper">
+            <table class="voucher-table">
+              <thead>
+                <tr>
+                  <th width="6%" class="border-right border-bottom">Sl. No.</th>
+                  <th width="50%" class="border-right border-bottom">Particulars</th>
+                  <th width="14%" class="border-right border-bottom">HSN Code</th>
+                  <th width="8%" class="border-right border-bottom">QTY</th>
+                  <th width="10%" class="border-right border-bottom">Rate</th>
+                  <th width="12%" class="border-bottom text-center">
+                    AMOUNT
+                    <div class="amount-split-headers">
+                      <span class="col-rs">Rs.</span>
+                      <span class="col-ps">Ps.</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Loop over user items -->
+                <tr *ngFor="let item of items">
+                  <td class="border-right text-center">{{item.slNo}}</td>
+                  <td class="border-right text-center">{{item.particulars || ' '}}</td>
+                  <td class="border-right text-center">{{item.hsnCode || ' '}}</td>
+                  <td class="border-right text-center">{{item.qty > 0 ? item.qty : ' '}}</td>
+                  <td class="border-right text-right">{{item.rate > 0 ? (item.rate | number:'1.2-2') : ' '}}</td>
+                  <td class="text-right amount-split-td">
+                    <span class="td-rs">{{item.amount > 0 ? (item.amount | number:'1.0-0') : ' '}}</span>
+                    <span class="td-ps">{{item.amount > 0 ? ((item.amount % 1 * 100) | number:'2.0-0') : ' '}}</span>
+                  </td>
+                </tr>
+                <!-- Spacer empty rows to match paper layout (height) -->
+                <tr *ngFor="let dummy of [].constructor(Math.max(0, 8 - items.length))">
+                  <td class="border-right">&nbsp;</td>
+                  <td class="border-right">&nbsp;</td>
+                  <td class="border-right">&nbsp;</td>
+                  <td class="border-right">&nbsp;</td>
+                  <td class="border-right">&nbsp;</td>
+                  <td class="amount-split-td">
+                    <span class="td-rs">&nbsp;</span>
+                    <span class="td-ps">&nbsp;</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total in Words & Calculation block -->
+          <div class="voucher-footer-grid">
+            <!-- Left Grid: Words & Bank details -->
+            <div class="footer-left-block border-right">
+              <div class="words-line">
+                <strong>Total Invoice Amount (in words)</strong>
+                <div class="words-val">{{totalAmountInWords}}</div>
+              </div>
+              
+              <!-- Fixed Bank Details -->
+              <div class="bank-details-box">
+                <div><strong>Bank Name</strong> : {{bankDetails.name}}</div>
+                <div><strong>A/CNo.</strong> : {{bankDetails.accountNo}}</div>
+                <div><strong>IFSCNo.</strong> : {{bankDetails.ifsc}}</div>
+              </div>
+
+              <!-- Terms and conditions -->
+              <div class="terms-box">
+                <div class="terms-title">Terms and conditions :</div>
+                <ol>
+                  <li>Goods once sold cannot be taken back</li>
+                  <li>Interest chargeable@24% per annum if the bill not paid within 15 days</li>
+                  <li>our responsibility ceases once the goods are handed to the carrier</li>
+                  <li>All disputes are subject to Sathupally Jurisdiction</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Right Grid: Totals Calculation Column -->
+            <div class="footer-right-block">
+              <table class="calc-table">
+                <tbody>
+                  <tr class="border-bottom">
+                    <td width="65%" class="border-right">TOTAL</td>
+                    <td width="35%" class="amount-split-td">
+                      <span class="td-rs">{{rawSubtotal | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(rawSubtotal % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                  <tr class="border-bottom">
+                    <td class="border-right">CGST {{cgstRate}} %</td>
+                    <td class="amount-split-td">
+                      <span class="td-rs">{{cgstAmount | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(cgstAmount % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                  <tr class="border-bottom">
+                    <td class="border-right">SGST {{sgstRate}} %</td>
+                    <td class="amount-split-td">
+                      <span class="td-rs">{{sgstAmount | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(sgstAmount % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                  <tr class="border-bottom">
+                    <td class="border-right">IGST {{igstRate}} %</td>
+                    <td class="amount-split-td">
+                      <span class="td-rs">{{igstAmount | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(igstAmount % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                  <tr class="border-bottom">
+                    <td class="border-right">Round Off</td>
+                    <td class="amount-split-td">
+                      <span class="td-rs">{{(roundOff >= 0 ? '+' : '')}}{{roundOff | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(Math.abs(roundOff) % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                  <tr class="value-highlight">
+                    <td class="border-right">Total Invoice Value</td>
+                    <td class="amount-split-td">
+                      <span class="td-rs">{{totalInvoiceValue | number:'1.0-0'}}</span>
+                      <span class="td-ps">{{(totalInvoiceValue % 1 * 100) | number:'2.0-0'}}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bottom Banner: Signatures & Authorisations -->
+          <div class="voucher-signature-block">
+            <div class="company-signature-label">FOR : RAVINDRA SRI VENGAMAMBA EQUIPMENTS & RENTALS</div>
+            <div class="signature-line-area">
+              <span>Authorised Signature</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Success Notification Modal Overlay -->
+  <div class="modal-overlay" *ngIf="success">
+    <div class="modal-card">
+      <div class="modal-icon">✅</div>
+      <h2>Invoice Saved Successfully!</h2>
+      <p class="modal-msg">{{message}}</p>
+      
+      <div class="filepath-box">
+        <label>Saved Path in System:</label>
+        <div class="filepath-text">{{savedFilePath}}</div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" (click)="closeModal()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>

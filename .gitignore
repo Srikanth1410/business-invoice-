@@ -1,0 +1,17 @@
+# Frontend - Angular
+FE/node_modules/
+FE/.angular/cache/
+FE/dist/
+FE/.angular/
+
+# Backend - Go
+BE/backend.exe
+BE/output_invoices/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.log

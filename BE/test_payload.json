@@ -1,0 +1,33 @@
+{
+  "invoiceNo": "RVE-2026-101",
+  "invoiceDate": "2026-07-15",
+  "receiverName": "Ravindra Sri Ramulu",
+  "receiverAddress": "Main Street, Sathupally, Telangana",
+  "receiverGstin": "36ABCDE1234F1Z0",
+  "receiverState": "Telangana",
+  "stateCode": "36",
+  "items": [
+    {
+      "slNo": 1,
+      "particulars": "Concrete Mixer Rental - 5 Days",
+      "hsnCode": "997312",
+      "qty": 5,
+      "rate": 1200,
+      "amount": 6000
+    },
+    {
+      "slNo": 2,
+      "particulars": "Vibrator Machine Rental - 2 Days",
+      "hsnCode": "997312",
+      "qty": 2,
+      "rate": 450,
+      "amount": 900
+    }
+  ],
+  "cgstRate": 9,
+  "sgstRate": 9,
+  "igstRate": 0,
+  "roundOff": 0,
+  "totalInvoiceValue": 8142,
+  "totalAmountInWords": "Eight Thousand One Hundred and Forty Two Rupees Only"
+}
